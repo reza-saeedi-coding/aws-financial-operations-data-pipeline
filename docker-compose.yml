@@ -1,0 +1,32 @@
+services:
+  pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: financial-ops-pipeline:latest
+    container_name: financial-ops-pipeline-run
+    command: python scripts/run_local_pipeline.py
+    volumes:
+      - ./data:/app/data
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: financial-ops-pipeline:latest
+    container_name: financial-ops-pipeline-test
+    command: pytest
+    volumes:
+      - ./data:/app/data
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: financial-ops-pipeline:latest
+    container_name: financial-ops-dashboard
+    command: streamlit run dashboard/app.py --server.address=0.0.0.0 --server.port=8501
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data

@@ -1,0 +1,32 @@
+# IDE
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.env
+
+# Test and cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Data outputs
+data/raw/
+data/processed/
+data/quarantine/
+data/quality_reports/
+data/reports/
+data/curated/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

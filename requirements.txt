@@ -1,0 +1,8 @@
+pandas
+faker
+pyarrow
+streamlit
+boto3
+python-dotenv
+pytest
+ruff
