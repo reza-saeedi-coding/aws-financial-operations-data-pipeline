@@ -1,0 +1,84 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowConsoleBucketDiscovery",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListAllMyBuckets"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowListProjectBucket",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket",
+        "s3:GetBucketLocation"
+      ],
+      "Resource": "arn:aws:s3:::aws-finops-reza-saeedi-20260603",
+      "Condition": {
+        "StringLike": {
+          "s3:prefix": [
+            "",
+            "raw/*",
+            "processed/*",
+            "quarantine/*",
+            "quality_reports/*",
+            "reports/*",
+            "curated/*",
+            "athena-results/*"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "AllowReadWriteProjectS3Objects",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::aws-finops-reza-saeedi-20260603/raw/*",
+        "arn:aws:s3:::aws-finops-reza-saeedi-20260603/processed/*",
+        "arn:aws:s3:::aws-finops-reza-saeedi-20260603/quarantine/*",
+        "arn:aws:s3:::aws-finops-reza-saeedi-20260603/quality_reports/*",
+        "arn:aws:s3:::aws-finops-reza-saeedi-20260603/reports/*",
+        "arn:aws:s3:::aws-finops-reza-saeedi-20260603/curated/*",
+        "arn:aws:s3:::aws-finops-reza-saeedi-20260603/athena-results/*"
+      ]
+    },
+    {
+      "Sid": "AllowAthenaQueriesInPrimaryWorkgroup",
+      "Effect": "Allow",
+      "Action": [
+        "athena:StartQueryExecution",
+        "athena:GetQueryExecution",
+        "athena:GetQueryResults",
+        "athena:StopQueryExecution",
+        "athena:BatchGetQueryExecution",
+        "athena:ListQueryExecutions",
+        "athena:GetWorkGroup"
+      ],
+      "Resource": "arn:aws:athena:eu-central-1:248032057527:workgroup/primary"
+    },
+    {
+      "Sid": "AllowGlueCatalogReadForFinancialOpsDb",
+      "Effect": "Allow",
+      "Action": [
+        "glue:GetDatabase",
+        "glue:GetDatabases",
+        "glue:GetTable",
+        "glue:GetTables",
+        "glue:GetPartition",
+        "glue:GetPartitions"
+      ],
+      "Resource": [
+        "arn:aws:glue:eu-central-1:248032057527:catalog",
+        "arn:aws:glue:eu-central-1:248032057527:database/financial_ops_db",
+        "arn:aws:glue:eu-central-1:248032057527:table/financial_ops_db/*"
+      ]
+    }
+  ]
+}

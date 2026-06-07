@@ -10,6 +10,8 @@ The pipeline uses realistic synthetic data for customers, invoices, payments, an
 
 The project first runs as a complete local data engineering pipeline. Its output layers are then uploaded to Amazon S3 and queried through Amazon Athena using external tables registered in the AWS Glue Data Catalog.
 
+The AWS extension was later strengthened with least-privilege IAM, Python-based S3 upload automation, an AWS Glue ETL job, AWS Lambda orchestration, S3 event triggering, and CloudWatch logging.
+
 ## Pipeline Flow
 
 ```text
@@ -27,6 +29,19 @@ Raw CSV data
 -> Amazon S3 data lake upload
 -> AWS Glue Data Catalog external tables
 -> Amazon Athena SQL analytics
+```
+
+## AWS Phase 2 Event-Driven Flow
+
+```text
+Local project outputs
+-> Python upload_to_s3.py
+-> Amazon S3 raw layer
+-> S3 ObjectCreated event on raw/invoices.csv
+-> AWS Lambda trigger
+-> AWS Glue Job
+-> Partitioned Parquet output in S3 curated layer
+-> CloudWatch Logs monitoring
 ```
 
 ## Datasets
@@ -75,7 +90,14 @@ These local layers are mirrored in Amazon S3 as a cloud data lake layout.
 * Amazon S3 data lake storage for local pipeline outputs
 * AWS Glue Data Catalog metadata registration through Athena external tables
 * Amazon Athena SQL querying over curated Parquet data in S3
-* AWS evidence screenshots for executed Athena queries
+* Least-privilege IAM setup for project AWS access
+* Python S3 upload automation using `boto3`
+* Secure local configuration pattern using `.env.example`
+* AWS Glue job for transforming raw invoice CSV data into partitioned Parquet
+* AWS Lambda function for starting the Glue job
+* S3 event trigger for event-driven Lambda orchestration
+* CloudWatch logs for Glue and Lambda monitoring
+* AWS evidence screenshots for Athena queries, IAM setup, S3 automation, Glue execution, Lambda triggering, and CloudWatch logs
 
 ## Technologies
 
@@ -90,9 +112,15 @@ These local layers are mirrored in Amazon S3 as a cloud data lake layout.
 * Docker
 * Docker Compose
 * GitHub Actions
+* boto3
+* python-dotenv
 * Amazon S3
+* AWS IAM
 * AWS Glue Data Catalog
+* AWS Glue Jobs
 * Amazon Athena
+* AWS Lambda
+* Amazon CloudWatch Logs
 
 ## Important Outputs
 
@@ -129,6 +157,12 @@ data/curated/customers/customers.parquet
 data/curated/invoices/year=*/month=*/*.parquet
 data/curated/payments/year=*/month=*/*.parquet
 data/curated/expenses/year=*/month=*/*.parquet
+```
+
+AWS Glue generated Parquet output:
+
+```text
+s3://aws-finops-reza-saeedi-20260603/curated/glue/invoices/
 ```
 
 Business metrics:
@@ -182,13 +216,17 @@ sql/aws/business_queries.sql
 
 This project was extended from a local data engineering pipeline into an AWS-based cloud data lake workflow.
 
-The local pipeline generates raw, processed, quarantine, quality report, business report, and curated Parquet outputs. These outputs were uploaded to Amazon S3 using a structured data lake layout.
+The local pipeline generates raw, processed, quarantine, quality report, business report, and curated Parquet outputs. These outputs are uploaded to Amazon S3 using a structured data lake layout.
 
 ### AWS Services Used
 
 * **Amazon S3**: Used as the cloud data lake storage layer.
+* **AWS IAM**: Used for least-privilege access control.
 * **AWS Glue Data Catalog**: Used as the metadata catalog for Athena external tables.
+* **AWS Glue Jobs**: Used for cloud ETL processing from raw CSV to partitioned Parquet.
 * **Amazon Athena**: Used to query curated Parquet datasets directly from S3 using SQL.
+* **AWS Lambda**: Used for lightweight orchestration of the Glue job.
+* **Amazon CloudWatch Logs**: Used for job and function execution monitoring.
 
 ### S3 Data Lake Layout
 
@@ -200,6 +238,7 @@ s3://aws-finops-reza-saeedi-20260603/quality_reports/
 s3://aws-finops-reza-saeedi-20260603/reports/
 s3://aws-finops-reza-saeedi-20260603/curated/
 s3://aws-finops-reza-saeedi-20260603/athena-results/
+s3://aws-finops-reza-saeedi-20260603/scripts/glue_jobs/
 ```
 
 ### Athena Database
@@ -261,17 +300,160 @@ The AWS evidence screenshots show Athena query results, query completion status,
 
 These screenshots demonstrate that the curated Parquet data was successfully queried from Amazon S3 through Athena.
 
+## Phase 2 - AWS Automation and Orchestration
+
+Phase 2 extends the AWS version of the project from a manually configured cloud data lake into a more automated and event-driven data engineering workflow.
+
+### Implemented AWS Phase 2 Components
+
+* Least-privilege IAM setup for project access
+* Dedicated IAM user and group for local S3 automation
+* Dedicated IAM role for AWS Glue job execution
+* Dedicated IAM role for AWS Lambda orchestration
+* Secure `.env.example` configuration pattern
+* Python-based S3 upload automation using `boto3`
+* AWS Glue job for transforming raw invoice CSV data into partitioned Parquet
+* CloudWatch Logs monitoring for Glue job execution
+* AWS Lambda function for triggering the Glue job
+* S3 event trigger for starting the Lambda function when `raw/invoices.csv` is uploaded or overwritten
+
+### AWS Phase 2 Flow
+
+```text
+Local project outputs
+        |
+        v
+Python upload_to_s3.py
+        |
+        v
+Amazon S3 raw layer
+        |
+        v
+S3 ObjectCreated event
+        |
+        v
+AWS Lambda
+        |
+        v
+AWS Glue Job
+        |
+        v
+Partitioned Parquet in S3 curated layer
+        |
+        v
+CloudWatch Logs monitoring
+```
+
+### Main Scripts
+
+```text
+scripts/upload_to_s3.py
+scripts/glue_jobs/invoices_to_parquet_glue_job.py
+scripts/lambda_functions/trigger_glue_job.py
+```
+
+### Phase 2 Documentation
+
+```text
+docs/aws_phase2_iam.md
+docs/aws_phase2_s3_automation.md
+docs/aws_phase2_glue_job.md
+docs/aws_phase2_lambda_orchestration.md
+```
+
+### Phase 2 Evidence
+
+AWS evidence screenshots are stored in:
+
+```text
+docs/aws_evidence/
+```
+
+The evidence includes IAM setup, S3 upload automation, Glue job execution, CloudWatch logs, Lambda manual test, and S3-triggered Lambda orchestration.
+
+Example Phase 2 evidence files:
+
+```text
+docs/aws_evidence/iam_group_policy_attached.png
+docs/aws_evidence/iam_project_user_group_membership.png
+docs/aws_evidence/s3_upload_automation_result.png
+docs/aws_evidence/glue_role_s3_policy_attached.png
+docs/aws_evidence/glue_script_uploaded_to_s3.png
+docs/aws_evidence/glue_job_run_succeeded.png
+docs/aws_evidence/glue_parquet_output_s3.png
+docs/aws_evidence/cloudwatch_glue_job_logs.png
+docs/aws_evidence/lambda_manual_test_started_glue_job.png
+docs/aws_evidence/s3_trigger_lambda_logs.png
+docs/aws_evidence/s3_trigger_glue_job_succeeded.png
+```
+
+### AWS Glue Job
+
+The AWS Glue job is named:
+
+```text
+financial-ops-invoices-to-parquet-job
+```
+
+It reads raw invoice data from:
+
+```text
+s3://aws-finops-reza-saeedi-20260603/raw/invoices.csv
+```
+
+It writes partitioned Parquet output to:
+
+```text
+s3://aws-finops-reza-saeedi-20260603/curated/glue/invoices/
+```
+
+The output is partitioned by:
+
+```text
+year
+month
+```
+
+The Glue job uses overwrite mode for its target path so repeated event-driven test runs do not duplicate analytical output.
+
+### AWS Lambda Orchestration
+
+The Lambda function is named:
+
+```text
+financial-ops-trigger-glue-job
+```
+
+It starts the Glue job when `raw/invoices.csv` is uploaded or overwritten in S3.
+
+The Lambda function uses an IAM execution role and does not store AWS credentials in code.
+
+### Security Notes
+
+This project avoids storing AWS credentials in source code.
+
+The real `.env` file is ignored by Git and must not be committed.
+
+The committed `.env.example` file contains only non-secret example configuration.
+
+IAM permissions are scoped to the project bucket, the project Glue job, and the required AWS services.
+
+Screenshots should not expose AWS account IDs, full ARNs, access keys, secret keys, emails, or unblurred account details.
+
 ### Cost-Aware AWS Usage
 
-This project intentionally uses low-cost AWS services only:
+This project intentionally uses low-cost, serverless or on-demand AWS services:
 
 * Amazon S3 for object storage
 * AWS Glue Data Catalog for metadata
 * Amazon Athena for serverless SQL queries
+* AWS Glue Jobs for on-demand ETL execution
+* AWS Lambda for event-driven orchestration
+* Amazon CloudWatch Logs for execution monitoring
 
 No EC2, RDS, Redshift, EMR, or always-running compute services are required for the current AWS version.
 
-Athena queries are kept small and targeted, and the curated data is stored in Parquet with year/month partitioning to reduce scanned data.
+Athena queries are kept small and targeted, and curated analytical data is stored in Parquet with year/month partitioning to reduce scanned data.
 
 ## Local Execution
 
@@ -299,6 +481,24 @@ Then open:
 
 ```text
 http://localhost:8501
+```
+
+## AWS S3 Upload Automation
+
+The project includes a Python script for uploading local output folders to Amazon S3:
+
+```powershell
+python scripts/upload_to_s3.py
+```
+
+The script reads local configuration from environment variables and a local `.env` file.
+
+The `.env` file must not be committed to Git.
+
+The safe template file is:
+
+```text
+.env.example
 ```
 
 ## PowerShell Task Runner
@@ -416,22 +616,29 @@ Local pipeline outputs uploaded to S3
 Athena database and external tables created
 Partitioned Parquet tables queried with Athena
 Business query evidence saved
+IAM least-privilege setup completed
+Python S3 upload automation completed
+AWS Glue job created and executed successfully
+Glue output written as partitioned Parquet in S3
+CloudWatch logs verified for Glue execution
+Lambda function created for Glue orchestration
+S3 trigger added for raw invoice upload events
+S3 event successfully triggered Lambda and started Glue job
 ```
 
-This project can now be described as a local data engineering pipeline extended with an AWS S3, Glue Data Catalog, and Athena analytics layer.
+This project can now be described as a local data engineering pipeline extended with an AWS S3, Glue Data Catalog, Athena analytics, Glue ETL, Lambda orchestration, and CloudWatch monitoring layer.
 
 ## Next Steps
 
 Planned next steps:
 
-* Add `scripts/upload_to_s3.py` to automate upload from local output folders to S3
-* Add `.env.example` for AWS region, S3 bucket, and optional S3 prefix configuration
-* Add IAM least-privilege documentation for S3, Glue, and Athena access
-* Add AWS Glue Jobs for ETL processing in the cloud
-* Add AWS Lambda for lightweight orchestration or trigger-based execution
-* Add Amazon CloudWatch logging and monitoring notes
-* Add Infrastructure as Code using Terraform or CloudFormation
-* Add CI/CD deployment workflow for AWS infrastructure and SQL artifacts
+* Add Terraform infrastructure definitions for S3, IAM, Glue, Lambda, and triggers
+* Add deployment documentation for AWS resources and scripts
+* Add GitHub Actions deployment notes for future CI/CD extension
+* Add a final AWS cost cleanup checklist
+* Improve architecture diagrams for README and LinkedIn project presentation
+* Optionally add more Glue jobs for payments and expenses
+* Optionally add Athena queries over Glue-generated curated outputs
 
 ## Project Goal
 
@@ -451,6 +658,11 @@ The goal of this project is to demonstrate practical junior data engineering ski
 * Automated testing
 * Dockerized local execution
 * Amazon S3 data lake storage
+* AWS IAM least-privilege access control
 * AWS Glue Data Catalog metadata management
 * Amazon Athena serverless SQL analytics
+* AWS Glue cloud ETL processing
+* AWS Lambda event-driven orchestration
+* Amazon CloudWatch logging and monitoring
+* Secure environment configuration using `.env.example`
 * Cost-aware cloud data engineering basics

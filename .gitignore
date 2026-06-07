@@ -9,7 +9,16 @@ __pycache__/
 .venv/
 venv/
 env/
+
+# Environment files
 .env
+.env.*
+!.env.example
+
+# AWS credentials and local config
+.aws/
+*.pem
+*.key
 
 # Test and cache
 .pytest_cache/
