@@ -10,7 +10,7 @@ The pipeline uses realistic synthetic data for customers, invoices, payments, an
 
 The project first runs as a complete local data engineering pipeline. Its output layers are then uploaded to Amazon S3 and queried through Amazon Athena using external tables registered in the AWS Glue Data Catalog.
 
-The AWS extension was later strengthened with least-privilege IAM, Python-based S3 upload automation, an AWS Glue ETL job, AWS Lambda orchestration, S3 event triggering, and CloudWatch logging.
+The AWS extension was later strengthened with least-privilege IAM, Python-based S3 upload automation, an AWS Glue ETL job, AWS Lambda orchestration, S3 event triggering, CloudWatch logging, and a safe Terraform / Infrastructure as Code layer.
 
 ## Pipeline Flow
 
@@ -98,6 +98,7 @@ These local layers are mirrored in Amazon S3 as a cloud data lake layout.
 * S3 event trigger for event-driven Lambda orchestration
 * CloudWatch logs for Glue and Lambda monitoring
 * AWS evidence screenshots for Athena queries, IAM setup, S3 automation, Glue execution, Lambda triggering, and CloudWatch logs
+* Terraform / Infrastructure as Code structure with provider configuration, variables, outputs, read-only Glue/Athena references, and import-ready templates
 
 ## Technologies
 
@@ -121,6 +122,7 @@ These local layers are mirrored in Amazon S3 as a cloud data lake layout.
 * Amazon Athena
 * AWS Lambda
 * Amazon CloudWatch Logs
+* Terraform
 
 ## Important Outputs
 
@@ -449,11 +451,110 @@ This project intentionally uses low-cost, serverless or on-demand AWS services:
 * Amazon Athena for serverless SQL queries
 * AWS Glue Jobs for on-demand ETL execution
 * AWS Lambda for event-driven orchestration
-* Amazon CloudWatch Logs for execution monitoring
+* Amazon CloudWatch Logs
+* Terraform for execution monitoring
 
 No EC2, RDS, Redshift, EMR, or always-running compute services are required for the current AWS version.
 
 Athena queries are kept small and targeted, and curated analytical data is stored in Parquet with year/month partitioning to reduce scanned data.
+
+## Phase 3 - Terraform / Infrastructure as Code
+
+Phase 3 adds Terraform as a safe Infrastructure as Code layer for the existing AWS implementation.
+
+The goal of this phase is not to rebuild the AWS environment from scratch. The core AWS resources were already created manually through the AWS Console during Phase 1 and Phase 2. Terraform is introduced gradually to document the infrastructure, reference existing resources safely, and prepare the project for future imports.
+
+### Implemented Terraform Components
+
+* Terraform project folder under `terraform/`
+* AWS provider configuration
+* Region and project variables
+* Safe outputs for project metadata
+* Read-only references to existing Glue/Athena tables
+* Import-ready documentation templates for:
+  * AWS Glue Job
+  * AWS Lambda function
+  * CloudWatch log groups
+  * S3 ObjectCreated orchestration flow
+
+### Terraform Folder Structure
+
+```text
+terraform/
+  README.md
+  versions.tf
+  providers.tf
+  variables.tf
+  outputs.tf
+  terraform.tfvars.example
+  s3.tf
+  glue_tables.tf
+  glue_job.tf
+  lambda.tf
+  cloudwatch.tf
+  orchestration.tf
+```
+
+### Validated Terraform Commands
+
+The following Terraform commands were tested successfully:
+
+```powershell
+terraform init
+terraform fmt
+terraform validate
+terraform plan
+```
+
+The current Terraform plan reads existing Glue/Athena metadata and shows output values without changing real AWS infrastructure.
+
+### Existing AWS Resources Referenced
+
+Terraform currently references or documents:
+
+* S3 bucket: `aws-finops-reza-saeedi-20260603`
+* Glue/Athena database: `financial_ops_db`
+* Glue/Athena tables:
+  * `customers`
+  * `invoices`
+  * `payments`
+  * `expenses`
+  * `business_metrics`
+* Glue job: `financial-ops-invoices-to-parquet-job`
+* Lambda function: `financial-ops-trigger-glue-job`
+* CloudWatch log retention: `14 days`
+* Event-driven workflow: S3 ObjectCreated trigger -> Lambda -> Glue Job
+
+### Terraform Safety Strategy
+
+Terraform is currently used in a non-destructive way.
+
+The project avoids:
+
+* running `terraform apply`
+* deleting AWS resources
+* recreating existing AWS resources
+* committing Terraform state files
+* committing local `.tfvars` files
+* exposing AWS credentials, full ARNs, or AWS Account ID
+
+Some AWS resources already exist. Before Terraform actively manages them, they should either be imported with `terraform import` or left as documentation templates.
+
+Example future import command:
+
+```powershell
+terraform import aws_glue_job.invoices_to_parquet financial-ops-invoices-to-parquet-job
+```
+
+This import command was documented but not executed during the current phase.
+
+### Phase 3 Documentation
+
+Detailed Phase 3 documentation is stored in:
+
+```text
+docs/aws_phase3_terraform.md
+```
 
 ## Local Execution
 
@@ -624,15 +725,18 @@ CloudWatch logs verified for Glue execution
 Lambda function created for Glue orchestration
 S3 trigger added for raw invoice upload events
 S3 event successfully triggered Lambda and started Glue job
+Terraform structure added for Infrastructure as Code
+Terraform init, fmt, validate, and plan tested successfully
+Existing Glue/Athena tables referenced safely with Terraform
 ```
 
-This project can now be described as a local data engineering pipeline extended with an AWS S3, Glue Data Catalog, Athena analytics, Glue ETL, Lambda orchestration, and CloudWatch monitoring layer.
+This project can now be described as a local data engineering pipeline extended with an AWS S3, Glue Data Catalog, Athena analytics, Glue ETL, Lambda orchestration, CloudWatch monitoring, and Terraform / Infrastructure as Code layer.
 
 ## Next Steps
 
 Planned next steps:
 
-* Add Terraform infrastructure definitions for S3, IAM, Glue, Lambda, and triggers
+* Optionally import selected existing AWS resources into Terraform state after careful review
 * Add deployment documentation for AWS resources and scripts
 * Add GitHub Actions deployment notes for future CI/CD extension
 * Add a final AWS cost cleanup checklist
@@ -666,3 +770,4 @@ The goal of this project is to demonstrate practical junior data engineering ski
 * Amazon CloudWatch logging and monitoring
 * Secure environment configuration using `.env.example`
 * Cost-aware cloud data engineering basics
+* Infrastructure as Code documentation and safe Terraform adoption

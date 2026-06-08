@@ -1,0 +1,5 @@
+aws_region = "eu-central-1"
+
+project_name = "aws-financial-operations-data-pipeline"
+
+s3_bucket_name = "aws-finops-reza-saeedi-20260603"

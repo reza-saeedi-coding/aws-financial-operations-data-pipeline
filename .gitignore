@@ -39,3 +39,11 @@ data/curated/
 # OS
 .DS_Store
 Thumbs.db
+
+# Terraform local files
+terraform/.terraform/
+terraform/terraform.tfvars
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/crash.log
+terraform/crash.*.log
